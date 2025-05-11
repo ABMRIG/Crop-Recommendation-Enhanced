@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Crop Recommendation System</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
+      <div class="theme-toggle-icon">
+        <i class="fas fa-sun"></i>
+      </div>
+    </div>
+
+    <div class="container main-container">
+      <header>
+        <div class="logo">
+          <i class="fas fa-seedling"></i>
+          <h1>Smart Crop Recommendation</h1>
+        </div>
+        <p class="tagline">
+          Get AI-powered recommendations for optimal crop selection based on
+          soil conditions
+        </p>
+      </header>
+
+      <div class="content-wrapper">
+        <div class="input-section">
+          <h2><i class="fas fa-sliders-h"></i> Input Parameters</h2>
+          <form method="POST" action="/predict" id="cropForm">
+            <div class="input-group">
+              <div class="input-field">
+                <label for="nitrogen">
+                  <i class="fas fa-flask"></i> Nitrogen (N)
+                  <span
+                    class="tooltip"
+                    data-tooltip="Nitrogen content in soil (mg/kg)"
+                    >?</span
+                  >
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  name="nitrogen"
+                  required
+                  value="{{ form_data.nitrogen if form_data else '' }}"
+                  placeholder="e.g., 40"
+                />
+              </div>
+
+              <div class="input-field">
+                <label for="phosphorus">
+                  <i class="fas fa-flask"></i> Phosphorus (P)
+                  <span
+                    class="tooltip"
+                    data-tooltip="Phosphorus content in soil (mg/kg)"
+                    >?</span
+                  >
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  name="phosphorus"
+                  required
+                  value="{{ form_data.phosphorus if form_data else '' }}"
+                  placeholder="e.g., 50"
+                />
+              </div>
+
+              <div class="input-field">
+                <label for="potassium">
+                  <i class="fas fa-flask"></i> Potassium (K)
+                  <span
+                    class="tooltip"
+                    data-tooltip="Potassium content in soil (mg/kg)"
+                    >?</span
+                  >
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  name="potassium"
+                  required
+                  value="{{ form_data.potassium if form_data else '' }}"
+                  placeholder="e.g., 60"
+                />
+              </div>
+
+              <div class="input-field">
+                <label for="temperature">
+                  <i class="fas fa-temperature-high"></i> Temperature
+                  <span
+                    class="tooltip"
+                    data-tooltip="Average temperature in Celsius"
+                    >?</span
+                  >
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  name="temperature"
+                  required
+                  value="{{ form_data.temperature if form_data else '' }}"
+                  placeholder="e.g., 25"
+                />
+                <span class="unit">°C</span>
+              </div>
+
+              <div class="input-field">
+                <label for="humidity">
+                  <i class="fas fa-tint"></i> Humidity
+                  <span class="tooltip" data-tooltip="Average relative humidity"
+                    >?</span
+                  >
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  name="humidity"
+                  required
+                  value="{{ form_data.humidity if form_data else '' }}"
+                  placeholder="e.g., 70"
+                />
+                <span class="unit">%</span>
+              </div>
+
+              <div class="input-field">
+                <label for="ph">
+                  <i class="fas fa-vial"></i> pH Level
+                  <span
+                    class="tooltip"
+                    data-tooltip="pH value of the soil (0-14 scale)"
+                    >?</span
+                  >
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  name="ph"
+                  required
+                  value="{{ form_data.ph if form_data else '' }}"
+                  placeholder="e.g., 6.5"
+                />
+              </div>
+
+              <div class="input-field">
+                <label for="rainfall">
+                  <i class="fas fa-cloud-rain"></i> Rainfall
+                  <span
+                    class="tooltip"
+                    data-tooltip="Annual rainfall in millimeters"
+                    >?</span
+                  >
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  name="rainfall"
+                  required
+                  value="{{ form_data.rainfall if form_data else '' }}"
+                  placeholder="e.g., 200"
+                />
+                <span class="unit">mm</span>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="primary-button">
+                <i class="fas fa-search"></i> Get Recommendation
+              </button>
+              <button type="reset" class="secondary-button">
+                <i class="fas fa-redo"></i> Reset
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {% if prediction %}
+        <div class="result-section animate-fade-in">
+          <div class="result-header">
+            <i class="fas fa-check-circle"></i>
+            <h2>Recommended Crop</h2>
+          </div>
+
+          <div class="result-content">
+            <div class="crop-card">
+              <div class="crop-image">
+                <img
+                  src="{{ url_for('static', filename='images/' + crop_image) }}"
+                  alt="{{ prediction }}"
+                />
+              </div>
+              <div class="crop-name">{{ prediction }}</div>
+            </div>
+
+            {% if crop_details %}
+            <div class="crop-details">
+              <div class="tabs">
+                <button class="tab-btn active" data-tab="diseases">
+                  <i class="fas fa-virus"></i> Diseases
+                </button>
+                <button class="tab-btn" data-tab="irrigation">
+                  <i class="fas fa-water"></i> Irrigation
+                </button>
+                <button class="tab-btn" data-tab="fertilizers">
+                  <i class="fas fa-leaf"></i> Fertilizers
+                </button>
+                <button class="tab-btn" data-tab="pests">
+                  <i class="fas fa-bug"></i> Pests
+                </button>
+                <button class="tab-btn" data-tab="pesticides">
+                  <i class="fas fa-spray-can"></i> Pesticides
+                </button>
+              </div>
+
+              <div class="tab-content">
+                <div class="tab-pane active" id="diseases">
+                  <h3><i class="fas fa-virus"></i> Common Diseases</h3>
+                  <div class="info-content">
+                    {{ crop_details.diseases|safe if crop_details.diseases else
+                    'Information not available' }}
+                  </div>
+                </div>
+
+                <div class="tab-pane" id="irrigation">
+                  <h3><i class="fas fa-water"></i> Irrigation Methods</h3>
+                  <div class="info-content">
+                    {{ crop_details.irrigation|safe if crop_details.irrigation
+                    else 'Information not available' }}
+                  </div>
+                </div>
+
+                <div class="tab-pane" id="fertilizers">
+                  <h3><i class="fas fa-leaf"></i> Recommended Fertilizers</h3>
+                  <div class="info-content">
+                    {{ crop_details.fertilizers|safe if crop_details.fertilizers
+                    else 'Information not available' }}
+                  </div>
+                </div>
+
+                <div class="tab-pane" id="pests">
+                  <h3><i class="fas fa-bug"></i> Common Pests</h3>
+                  <div class="info-content">
+                    {{ crop_details.pests|safe if crop_details.pests else
+                    'Information not available' }}
+                  </div>
+                </div>
+
+                <div class="tab-pane" id="pesticides">
+                  <h3>
+                    <i class="fas fa-spray-can"></i> Recommended Pesticides
+                  </h3>
+                  <div class="info-content">
+                    {{ crop_details.pesticides|safe if crop_details.pesticides
+                    else 'Information not available' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %} {% if error %}
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          <p>{{ error }}</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <footer>
+        <p>
+          © {{ current_year }} Smart Crop Recommendation System |
+          <a href="#about">About</a> | <a href="#contact">Contact</a>
+        </p>
+      </footer>
+    </div>
+
+    <script>
+      // Theme toggle script
+      document.addEventListener("DOMContentLoaded", function () {
+        const themeToggle = document.getElementById("themeToggle");
+        const themeIcon = themeToggle.querySelector("i");
+        const htmlElement = document.documentElement;
+
+        // Check for saved theme preference or use preferred color scheme
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme) {
+          htmlElement.setAttribute("data-theme", savedTheme);
+          updateIcon(savedTheme);
+        } else {
+          // Check for system preference
+          const prefersDark =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          if (prefersDark) {
+            htmlElement.setAttribute("data-theme", "dark");
+            updateIcon("dark");
+          }
+        }
+
+        // Toggle theme when clicking the button
+        themeToggle.addEventListener("click", function () {
+          const currentTheme = htmlElement.getAttribute("data-theme");
+          const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+          htmlElement.setAttribute("data-theme", newTheme);
+          localStorage.setItem("theme", newTheme);
+          updateIcon(newTheme);
+        });
+
+        function updateIcon(theme) {
+          // Update the icon based on the current theme
+          if (theme === "dark") {
+            themeIcon.className = "fas fa-moon";
+          } else {
+            themeIcon.className = "fas fa-sun";
+          }
+        }
+
+        // Tab functionality
+        const tabButtons = document.querySelectorAll(".tab-btn");
+        const tabPanes = document.querySelectorAll(".tab-pane");
+
+        tabButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            // Remove active class from all buttons and panes
+            tabButtons.forEach((btn) => btn.classList.remove("active"));
+            tabPanes.forEach((pane) => pane.classList.remove("active"));
+
+            // Add active class to clicked button
+            button.classList.add("active");
+
+            // Show the corresponding tab pane
+            const tabId = button.getAttribute("data-tab");
+            document.getElementById(tabId).classList.add("active");
+          });
+        });
+
+        // Add tooltip functionality
+        const tooltips = document.querySelectorAll(".tooltip");
+        tooltips.forEach((tooltip) => {
+          tooltip.addEventListener("mouseenter", function () {
+            const tooltipText = this.getAttribute("data-tooltip");
+            const tooltipElement = document.createElement("div");
+            tooltipElement.className = "tooltip-text";
+            tooltipElement.textContent = tooltipText;
+
+            this.appendChild(tooltipElement);
+
+            // Position the tooltip
+            const rect = tooltipElement.getBoundingClientRect();
+            if (rect.right > window.innerWidth) {
+              tooltipElement.style.left = "auto";
+              tooltipElement.style.right = "0";
+            }
+          });
+
+          tooltip.addEventListener("mouseleave", function () {
+            const tooltipText = this.querySelector(".tooltip-text");
+            if (tooltipText) {
+              tooltipText.remove();
+            }
+          });
+        });
+
+        // Animation for the result section when it appears
+        const resultSection = document.querySelector(".result-section");
+        if (resultSection) {
+          resultSection.classList.add("visible");
+        }
+      });
+
+      // Form validation with appropriate ranges
+      document.addEventListener("DOMContentLoaded", function () {
+        const cropForm = document.getElementById("cropForm");
+        if (cropForm) {
+          // Handle reset button functionality
+          const resetButton = cropForm.querySelector('button[type="reset"]');
+          if (resetButton) {
+            resetButton.addEventListener("click", function(event) {
+              event.preventDefault(); // Prevent default reset behavior
+              
+              // Clear all input fields
+              const inputFields = cropForm.querySelectorAll('input');
+              inputFields.forEach(input => {
+                input.value = '';
+              });
+              
+              // Remove any error messages
+              document.querySelectorAll(".input-error").forEach(el => el.remove());
+              document.querySelectorAll(".error-field").forEach(el => el.classList.remove("error-field"));
+            });
+          }
+          
+          cropForm.addEventListener("submit", function (event) {
+            const inputs = cropForm.querySelectorAll("input[required]");
+            let hasErrors = false;
+
+            // Remove any existing error messages
+            document
+              .querySelectorAll(".input-error")
+              .forEach((el) => el.remove());
+
+            inputs.forEach((input) => {
+              input.classList.remove("error-field");
+
+              if (!input.value.trim()) {
+                hasErrors = true;
+                input.classList.add("error-field");
+
+                // Create error message
+                const errorMsg = document.createElement("div");
+                errorMsg.className = "input-error";
+                errorMsg.textContent = "This field is required";
+                input.parentNode.appendChild(errorMsg);
+              } else if (input.type === "number") {
+                const value = parseFloat(input.value);
+
+                // Check for reasonable ranges based on input name
+                let isOutOfRange = false;
+                let rangeMessage = "";
+
+                switch (input.name) {
+                  case "nitrogen":
+                    if (value < 0 || value > 150) {
+                      isOutOfRange = true;
+                      rangeMessage = "Typically between 0-150 mg/kg";
+                    }
+                    break;
+                  case "phosphorus":
+                    if (value < 3 || value > 155) {
+                      isOutOfRange = true;
+                      rangeMessage = "Typically between 3-155 mg/kg";
+                    }
+                    break;
+                  case "potassium":
+                    if (value < 3 || value > 215) {
+                      isOutOfRange = true;
+                      rangeMessage = "Typically between 3-215 mg/kg";
+                    }
+                    break;
+                  case "temperature":
+                    if (value < 6 || value > 48) {
+                      isOutOfRange = true;
+                      rangeMessage = "Typically between 6°C and 48°C";
+                    }
+                    break;
+                  case "humidity":
+                    if (value < 12 || value > 110) {
+                      isOutOfRange = true;
+                      rangeMessage = "Must be between 12-110%";
+                    }
+                    break;
+                  case "ph":
+                    if (value < 3 || value > 10) {
+                      isOutOfRange = true;
+                      rangeMessage = "pH typically between 3-10";
+                    }
+                    break;
+                  case "rainfall":
+                    if (value < 15 || value > 305) {
+                      isOutOfRange = true;
+                      rangeMessage = "Typically between 15-305mm";
+                    }
+                    break;
+                }
+
+                if (isOutOfRange) {
+                  hasErrors = true;
+                  input.classList.add("error-field");
+
+                  // Create warning message
+                  const errorMsg = document.createElement("div");
+                  errorMsg.className = "input-error";
+                  errorMsg.textContent = "Unusual value. " + rangeMessage;
+                  input.parentNode.appendChild(errorMsg);
+                }
+              }
+            });
+
+            if (hasErrors) {
+              event.preventDefault();
+
+              // Scroll to the first error
+              const firstError = document.querySelector(".error-field");
+              if (firstError) {
+                firstError.focus();
+                firstError.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }
+            }
+          });
+        }
+
+        // Add fading transition between tabs
+        const tabButtons = document.querySelectorAll(".tab-btn");
+        tabButtons.forEach((button) => {
+          button.addEventListener("click", function () {
+            const tabId = this.getAttribute("data-tab");
+            const activePane = document.querySelector(".tab-pane.active");
+
+            if (activePane) {
+              activePane.style.opacity = "0";
+              setTimeout(() => {
+                activePane.classList.remove("active");
+                document.getElementById(tabId).classList.add("active");
+                setTimeout(() => {
+                  document.getElementById(tabId).style.opacity = "1";
+                }, 50);
+              }, 300);
+            }
+          });
+        });
+
+        // Initialize active tab
+        const activePane = document.querySelector(".tab-pane.active");
+        if (activePane) {
+          activePane.style.opacity = "1";
+        }
+      });
+    </script>
+  </body>
+</html>
